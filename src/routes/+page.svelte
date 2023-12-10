@@ -57,11 +57,11 @@
 	{/if}
 
 	{#if form}
-		{#if form.forecast.success}
+		{#if form.success}
 			<p>Success!</p>
-			<pre>{JSON.stringify(form.forecast.data, null, 2)}</pre>
+			<p>{JSON.stringify(form.forecast)}</p>
 		{:else}
-			<p>Oops! {form.forecast.message}</p>
+			<p>Oops! {form.error}</p>
 		{/if}
 	{/if}
 </form>

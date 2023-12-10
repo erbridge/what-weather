@@ -1,8 +1,26 @@
 import { getForecast } from '$lib/api/forecast.server';
+import { willProbablyRainHeavily } from '$lib/weather';
 import type { Actions } from './$types';
 
+interface Forecast {
+	heavyRain?: boolean;
+}
+
 export const actions = {
-	async default(event) {
+	async default(event): Promise<
+		(
+			| {
+					forecast: Forecast;
+					success: true;
+			  }
+			| {
+					error: string;
+					success: false;
+			  }
+		) & {
+			input: Record<string, string>;
+		}
+	> {
 		const formData = await event.request.formData();
 		const formDataEntries = Array.from(formData.entries());
 
@@ -23,7 +41,7 @@ export const actions = {
 		);
 
 		// TODO: Cache this data for eg 1 hour?
-		const forecast = await getForecast(
+		const forecastResponse = await getForecast(
 			{
 				latitude,
 				longitude
@@ -33,9 +51,23 @@ export const actions = {
 			}
 		);
 
+		if (!forecastResponse.success) {
+			return {
+				error: forecastResponse.message,
+				input,
+				success: false
+			};
+		}
+
+		const forecast: Forecast = {};
+		if (weatherConditions.includes('heavyRain')) {
+			forecast.heavyRain = willProbablyRainHeavily(forecastResponse.data.hourly.data);
+		}
+
 		return {
 			forecast,
-			input
+			input,
+			success: true
 		};
 	}
 } satisfies Actions;
